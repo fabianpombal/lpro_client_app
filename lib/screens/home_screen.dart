@@ -23,6 +23,12 @@ class HomeScreen extends StatelessWidget {
       'Producto7',
       'Producto8'
     ];
+
+    socket.socket.on('app', (data) {
+      print(data);
+      prod.addProduct(data);
+    });
+
     return Scaffold(
       appBar: AppBar(
           title: Text(
@@ -52,8 +58,8 @@ class HomeScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8.0),
               child: Container(
                 width: double.infinity,
-                height: 500,
-                color: Colors.red,
+                height: 400,
+                color: Colors.white60,
                 child: GridView.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 4),
@@ -78,9 +84,10 @@ class HomeScreen extends StatelessWidget {
             MaterialButton(
               onPressed: () {
                 // print(prod.products);
+
                 prod.clearProducts();
               },
-              color: Colors.blue,
+              color: Colors.indigo,
               child: Text(
                 'Comprar',
                 style: TextStyle(color: Colors.white, fontSize: 14),
@@ -94,7 +101,6 @@ class HomeScreen extends StatelessWidget {
               child: Container(
                 height: 150,
                 width: double.infinity,
-                color: Colors.amber,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemBuilder: (BuildContext context, int index) {
@@ -108,7 +114,7 @@ class HomeScreen extends StatelessWidget {
                           color: Colors.green,
                         ),
                         onTap: () {
-                          prod.addProduct(productos[index]);
+                          socket.socket.emit('client-app', productos[index]);
                         },
                       ),
                     );
