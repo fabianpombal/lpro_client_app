@@ -10,9 +10,10 @@ class HomeScreen extends StatelessWidget {
     final socket = Provider.of<SocketService>(context);
     final prod = Provider.of<ProductService>(context);
 
-    if (socket.serverStatus == ServerStatus.Connecting) {
-      return LoadingScreen();
-    }
+    // if (socket.serverStatus == ServerStatus.Connecting) {
+    //   return LoadingScreen();
+    // }
+
     List<String> productos = [
       'Producto1',
       'Producto2',
@@ -24,15 +25,15 @@ class HomeScreen extends StatelessWidget {
       'Producto8'
     ];
 
-    socket.socket.on('app', (data) {
-      print(data);
-      prod.addProduct(data);
+    socket.socket.on('nuevo-mensaje', (value) {
+      prod.name = value.toString();
+      prod.cambioEstado();
     });
 
     return Scaffold(
       appBar: AppBar(
           title: Text(
-            'Client app',
+            'Client App',
             style: TextStyle(color: Colors.black),
           ),
           backgroundColor: Colors.white,
@@ -41,11 +42,11 @@ class HomeScreen extends StatelessWidget {
               padding: EdgeInsets.all(8),
               child: socket.serverStatus == ServerStatus.Online
                   ? Icon(
-                      Icons.connected_tv,
+                      Icons.wifi,
                       color: Colors.green,
                     )
                   : Icon(
-                      Icons.tv_off_outlined,
+                      Icons.wifi_off,
                       color: Colors.red,
                     ),
             )
@@ -54,12 +55,17 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
+            Icon(
+              Icons.shopify_outlined,
+              color: Colors.green,
+              size: 50,
+            ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Container(
                 width: double.infinity,
                 height: 400,
-                color: Colors.white60,
+                color: Colors.grey,
                 child: GridView.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 4),
@@ -84,8 +90,14 @@ class HomeScreen extends StatelessWidget {
             MaterialButton(
               onPressed: () {
                 // print(prod.products);
-
-                prod.clearProducts();
+                if (socket.serverStatus == ServerStatus.Online) {
+                  prod.products.forEach((element) {
+                    socket.socket.emit('client-app', {"name": element});
+                  });
+                  prod.clearProducts();
+                } else {
+                  return;
+                }
               },
               color: Colors.indigo,
               child: Text(
@@ -114,7 +126,7 @@ class HomeScreen extends StatelessWidget {
                           color: Colors.green,
                         ),
                         onTap: () {
-                          socket.socket.emit('client-app', productos[index]);
+                          prod.addProduct(productos[index]);
                         },
                       ),
                     );
