@@ -10,25 +10,11 @@ class HomeScreen extends StatelessWidget {
     final socket = Provider.of<SocketService>(context);
     final prod = Provider.of<ProductService>(context);
 
-    // if (socket.serverStatus == ServerStatus.Connecting) {
-    //   return LoadingScreen();
-    // }
-
-    List<String> productos = [
-      'Producto1',
-      'Producto2',
-      'Producto3',
-      'Producto4',
-      'Producto5',
-      'Producto6',
-      'Producto7',
-      'Producto8'
-    ];
-
-    socket.socket.on('nuevo-mensaje', (value) {
-      prod.name = value.toString();
-      prod.cambioEstado();
-    });
+    if (socket.serverStatus == ServerStatus.Connecting) {
+      return LoadingScreen(
+        texto: 'Conectando con el servidor...',
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -68,19 +54,39 @@ class HomeScreen extends StatelessWidget {
                 color: Colors.grey,
                 child: GridView.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4),
+                      crossAxisCount: 3),
                   itemBuilder: (BuildContext context, int index) {
                     return Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.all(1.0),
                       child: Container(
-                        width: 50,
                         height: 100,
-                        color: Colors.deepPurpleAccent,
-                        child: Text(prod.products[index]),
+                        width: 200,
+                        color: Colors.white,
+                        child: Column(
+                          children: [
+                            Container(
+                              child: Text(prod.productosEnviar[index].name),
+                              width: double.infinity,
+                              height: 20,
+                              color: Colors.white,
+                            ),
+                            ClipRRect(
+                              child: Container(
+                                height: 100,
+                                width: 200,
+                                child: Image(
+                                  image: NetworkImage(
+                                      prod.productosEnviar[index].picture),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },
-                  itemCount: prod.products.length,
+                  itemCount: prod.productosEnviar.length,
                 ),
               ),
             ),
@@ -91,10 +97,12 @@ class HomeScreen extends StatelessWidget {
               onPressed: () {
                 // print(prod.products);
                 if (socket.serverStatus == ServerStatus.Online) {
-                  prod.products.forEach((element) {
-                    socket.socket.emit('client-app', {"name": element});
+                  prod.productosEnviar.forEach((element) {
+                    print('emitido: ${element.toMap()}');
+                    socket.socket.emit('add-product', element.toMap());
                   });
-                  prod.clearProducts();
+
+                  prod.clearProds();
                 } else {
                   return;
                 }
@@ -120,18 +128,37 @@ class HomeScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(8.0),
                       child: GestureDetector(
                         child: Container(
-                          height: 50,
-                          width: 100,
-                          child: Text(productos[index]),
-                          color: Colors.green,
+                          height: 100,
+                          width: 200,
+                          child: Column(
+                            children: [
+                              Container(
+                                child: Text(prod.products[index].name),
+                                width: double.infinity,
+                                height: 20,
+                                color: Colors.white,
+                              ),
+                              ClipRRect(
+                                child: Container(
+                                  height: 100,
+                                  width: double.infinity,
+                                  child: Image(
+                                    image: NetworkImage(
+                                        prod.products[index].picture),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         onTap: () {
-                          prod.addProduct(productos[index]);
+                          prod.addProductos(prod.products[index]);
                         },
                       ),
                     );
                   },
-                  itemCount: productos.length,
+                  itemCount: prod.products.length,
                 ),
               ),
             )
