@@ -1,4 +1,5 @@
 import 'package:client_lpro_app/screens/home_screen.dart';
+import 'package:client_lpro_app/screens/select_ip_screen.dart';
 import 'package:client_lpro_app/services/product_service.dart';
 import 'package:client_lpro_app/services/socket_service.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +29,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         initialRoute: 'home',
-        routes: {'home': (_) => HomeScreen()},
+        routes: {'home': (_) => HomeScreen(), 'ip': (_) => SelectIpScreen()},
       ),
     );
   }

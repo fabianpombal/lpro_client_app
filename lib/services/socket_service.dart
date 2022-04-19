@@ -5,6 +5,7 @@ enum ServerStatus { Online, Offline, Connecting }
 
 class SocketService with ChangeNotifier {
   String dato = '1235343';
+  String _ip = '192.168.1.41';
   ServerStatus _serverStatus = ServerStatus.Connecting;
   late IO.Socket _socket;
 
@@ -15,9 +16,16 @@ class SocketService with ChangeNotifier {
   ServerStatus get serverStatus => this._serverStatus;
   IO.Socket get socket => this._socket;
 
+  String get ip => this._ip;
+  void set ip(String ip) {
+    this._ip = ip;
+    notifyListeners();
+    _initConfig();
+  }
+
   void _initConfig() {
     this._socket = IO.io(
-        'http://192.168.1.38:8001',
+        'http://$_ip:8001',
         IO.OptionBuilder().setTransports(['websocket']).setExtraHeaders(
             {'foo': 'bar'}).build());
 

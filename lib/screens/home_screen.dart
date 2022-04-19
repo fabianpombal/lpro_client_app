@@ -10,42 +10,39 @@ class HomeScreen extends StatelessWidget {
     final socket = Provider.of<SocketService>(context);
     final prod = Provider.of<ProductService>(context);
 
-    if (socket.serverStatus == ServerStatus.Connecting) {
-      return LoadingScreen(
-        texto: 'Conectando con el servidor...',
-      );
-    }
-
     return Scaffold(
       appBar: AppBar(
-          title: Text(
-            'Client App',
-            style: TextStyle(color: Colors.black),
-          ),
-          backgroundColor: Colors.white,
-          actions: [
-            Padding(
-              padding: EdgeInsets.all(8),
-              child: socket.serverStatus == ServerStatus.Online
-                  ? Icon(
-                      Icons.wifi,
-                      color: Colors.green,
-                    )
-                  : Icon(
-                      Icons.wifi_off,
-                      color: Colors.red,
-                    ),
-            )
-          ]),
+        title: Text(
+          'Client App',
+          style: TextStyle(color: Colors.black),
+        ),
+        backgroundColor: Colors.white,
+        actions: [
+          IconButton(
+              onPressed: () {
+                Navigator.pushNamed(context, 'ip');
+              },
+              icon: const Icon(
+                Icons.edit,
+                color: Colors.black,
+              ))
+        ],
+      ),
       body: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            Icon(
-              Icons.shopify_outlined,
-              color: Colors.green,
-              size: 50,
-            ),
+            socket.serverStatus == ServerStatus.Online
+                ? Icon(
+                    Icons.shopify_outlined,
+                    color: Colors.green,
+                    size: 100,
+                  )
+                : Icon(
+                    Icons.tv_off_outlined,
+                    color: Colors.red,
+                    size: 100,
+                  ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Container(
@@ -57,7 +54,7 @@ class HomeScreen extends StatelessWidget {
                       crossAxisCount: 3),
                   itemBuilder: (BuildContext context, int index) {
                     return Padding(
-                      padding: const EdgeInsets.all(1.0),
+                      padding: const EdgeInsets.all(10.0),
                       child: Container(
                         height: 100,
                         width: 200,
@@ -65,15 +62,18 @@ class HomeScreen extends StatelessWidget {
                         child: Column(
                           children: [
                             Container(
-                              child: Text(prod.productosEnviar[index].name),
+                              child: Text(
+                                prod.productosEnviar[index].name,
+                                style: TextStyle(fontSize: 20),
+                              ),
                               width: double.infinity,
                               height: 20,
                               color: Colors.white,
                             ),
                             ClipRRect(
                               child: Container(
-                                height: 100,
-                                width: 200,
+                                height: 200,
+                                width: 150,
                                 child: Image(
                                   image: NetworkImage(
                                       prod.productosEnviar[index].picture),
@@ -96,12 +96,13 @@ class HomeScreen extends StatelessWidget {
             MaterialButton(
               onPressed: () {
                 // print(prod.products);
+                String listaIdProds = "";
                 if (socket.serverStatus == ServerStatus.Online) {
-                  prod.productosEnviar.forEach((element) {
-                    print('emitido: ${element.toMap()}');
-                    socket.socket.emit('add-product', element.toMap());
+                  prod.productosEnviar.forEach((e) {
+                    print('${e.toMap()}');
+                    listaIdProds = listaIdProds + e.rfidTag;
                   });
-
+                  socket.socket.emit('client-app', listaIdProds);
                   prod.clearProds();
                 } else {
                   return;
@@ -110,7 +111,7 @@ class HomeScreen extends StatelessWidget {
               color: Colors.indigo,
               child: Text(
                 'Comprar',
-                style: TextStyle(color: Colors.white, fontSize: 14),
+                style: TextStyle(color: Colors.white, fontSize: 15),
               ),
             ),
             SizedBox(
