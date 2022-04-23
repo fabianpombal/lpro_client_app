@@ -10,6 +10,9 @@ class HomeScreen extends StatelessWidget {
     final socket = Provider.of<SocketService>(context);
     final prod = Provider.of<ProductService>(context);
 
+    if (socket.serverStatus == ServerStatus.Connecting)
+      return LoadingScreen(texto: 'Conectando con el servidor');
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -36,12 +39,12 @@ class HomeScreen extends StatelessWidget {
                 ? Icon(
                     Icons.shopify_outlined,
                     color: Colors.green,
-                    size: 100,
+                    size: 70,
                   )
                 : Icon(
                     Icons.tv_off_outlined,
                     color: Colors.red,
-                    size: 100,
+                    size: 70,
                   ),
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -55,33 +58,33 @@ class HomeScreen extends StatelessWidget {
                   itemBuilder: (BuildContext context, int index) {
                     return Padding(
                       padding: const EdgeInsets.all(10.0),
-                      child: Container(
-                        height: 100,
-                        width: 200,
-                        color: Colors.white,
-                        child: Column(
-                          children: [
-                            Container(
-                              child: Text(
-                                prod.productosEnviar[index].name,
-                                style: TextStyle(fontSize: 20),
-                              ),
-                              width: double.infinity,
-                              height: 20,
-                              color: Colors.white,
-                            ),
-                            ClipRRect(
-                              child: Container(
-                                height: 200,
-                                width: 150,
-                                child: Image(
-                                  image: NetworkImage(
-                                      prod.productosEnviar[index].picture),
-                                  fit: BoxFit.cover,
+                      child: GestureDetector(
+                        onTap: () {
+                          prod.productosEnviar.clear();
+                        },
+                        child: Container(
+                          height: 200,
+                          width: 150,
+                          decoration: BoxDecoration(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(20))),
+                          child: Column(
+                            children: [
+                              ClipRRect(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(20)),
+                                child: Container(
+                                  height: 100,
+                                  width: 150,
+                                  child: Image(
+                                    image: NetworkImage(
+                                        prod.productosEnviar[index].picture),
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     );
@@ -94,24 +97,34 @@ class HomeScreen extends StatelessWidget {
               height: 5,
             ),
             MaterialButton(
-              onPressed: () {
-                // print(prod.products);
-                String listaIdProds = "";
-                if (socket.serverStatus == ServerStatus.Online) {
-                  prod.productosEnviar.forEach((e) {
-                    print('${e.toMap()}');
-                    listaIdProds = listaIdProds + e.rfidTag;
-                  });
-                  socket.socket.emit('client-app', listaIdProds);
-                  prod.clearProds();
-                } else {
-                  return;
-                }
-              },
+              elevation: 70,
+              onPressed: socket.serverStatus != ServerStatus.Online
+                  ? null
+                  : () {
+                      // print(prod.products);
+                      String listaIdProds = "";
+                      if (socket.serverStatus == ServerStatus.Online) {
+                        prod.productosEnviar.forEach((e) {
+                          print('${e.toMap()}');
+                          prod.updateProducto(e);
+                          // listaIdProds = listaIdProds + e.rfidTag;
+
+                          socket.socket.emit('client-app', e.toMap());
+                        });
+                        socket.socket.emit('client-app', "fin-pedido");
+                        prod.clearProds();
+                      } else {
+                        return;
+                      }
+                    },
               color: Colors.indigo,
               child: Text(
                 'Comprar',
-                style: TextStyle(color: Colors.white, fontSize: 15),
+                style: TextStyle(
+                    fontSize: 15,
+                    color: socket.serverStatus != ServerStatus.Online
+                        ? Colors.black26
+                        : Colors.white),
               ),
             ),
             SizedBox(
@@ -120,7 +133,7 @@ class HomeScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Container(
-                height: 150,
+                height: 200,
                 width: double.infinity,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
@@ -129,24 +142,51 @@ class HomeScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(8.0),
                       child: GestureDetector(
                         child: Container(
-                          height: 100,
+                          height: 300,
                           width: 200,
+                          decoration: BoxDecoration(
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(20))),
                           child: Column(
                             children: [
                               Container(
-                                child: Text(prod.products[index].name),
+                                child: Stack(
+                                  alignment: Alignment.bottomLeft,
+                                  children: [
+                                    Text(
+                                      prod.products[index].name,
+                                      style: TextStyle(fontSize: 17),
+                                    ),
+                                    Positioned(
+                                      child: prod.products[index].stock != 0
+                                          ? Text(
+                                              'Quedan: ${prod.products[index].stock}')
+                                          : Text(
+                                              "No hay stock",
+                                              style:
+                                                  TextStyle(color: Colors.red),
+                                            ),
+                                      top: 0,
+                                      right: 0,
+                                    )
+                                  ],
+                                ),
                                 width: double.infinity,
-                                height: 20,
+                                height: 30,
                                 color: Colors.white,
                               ),
                               ClipRRect(
                                 child: Container(
-                                  height: 100,
+                                  height: 150,
                                   width: double.infinity,
-                                  child: Image(
+                                  child: FadeInImage(
+                                    placeholder:
+                                        const AssetImage('assets/load.gif'),
                                     image: NetworkImage(
                                         prod.products[index].picture),
                                     fit: BoxFit.cover,
+                                    fadeInDuration:
+                                        const Duration(milliseconds: 100),
                                   ),
                                 ),
                               ),
@@ -154,6 +194,10 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ),
                         onTap: () {
+                          if (prod.products[index].stock == 0) return;
+                          prod.products[index].stock =
+                              prod.products[index].stock - 1;
+                          print(prod.products[index].stock);
                           prod.addProductos(prod.products[index]);
                         },
                       ),

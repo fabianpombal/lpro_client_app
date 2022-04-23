@@ -6,20 +6,20 @@ import 'dart:convert';
 
 class Producto {
   Producto({
-    required this.estante,
+    required this.columna,
     required this.name,
     required this.picture,
     required this.rfidTag,
     required this.stock,
-    required this.valda,
+    required this.fila,
   });
 
-  int estante;
+  int columna;
   String name;
   String picture;
   String rfidTag;
   int stock;
-  int valda;
+  int fila;
   String? id;
 
   factory Producto.fromJson(String str) => Producto.fromMap(json.decode(str));
@@ -27,19 +27,19 @@ class Producto {
   String toJson() => json.encode(toMap());
 
   factory Producto.fromMap(Map<String, dynamic> json) => Producto(
-      estante: json["estante"],
+      columna: json["columna"],
       name: json["name"],
       picture: json["picture"],
       rfidTag: json["rfidTag"],
       stock: json["stock"],
-      valda: json["valda"]);
+      fila: json["fila"]);
 
   Map<String, dynamic> toMap() => {
-        "estante": estante,
+        "columna": columna,
         "name": name,
         "picture": picture,
         "rfidTag": rfidTag,
         "stock": stock,
-        "valda": valda,
+        "fila": fila,
       };
 }

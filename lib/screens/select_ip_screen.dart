@@ -15,6 +15,7 @@ class SelectIpScreen extends StatelessWidget {
             child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TextFormField(
                 decoration: InputDecoration(
@@ -36,7 +37,7 @@ class SelectIpScreen extends StatelessWidget {
                   "Confirmar",
                   style: TextStyle(color: Colors.white),
                 ),
-                color: Colors.indigo,
+                color: Colors.blue,
               )
             ],
           ),

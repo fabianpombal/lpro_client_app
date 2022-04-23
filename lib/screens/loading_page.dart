@@ -20,6 +20,29 @@ class LoadingScreen extends StatelessWidget {
             Text(
               texto,
               style: TextStyle(fontSize: 17, color: Colors.white),
+            ),
+            SizedBox(
+              height: 50,
+            ),
+            MaterialButton(
+              onPressed: () {
+                Navigator.pushNamed(context, 'ip');
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("cambiar la ip del servidor",
+                      style: TextStyle(fontSize: 15, color: Colors.white)),
+                  SizedBox(
+                    width: 10,
+                  ),
+                  const Icon(
+                    Icons.edit,
+                    color: Colors.white,
+                    size: 20,
+                  )
+                ],
+              ),
             )
           ],
         )));

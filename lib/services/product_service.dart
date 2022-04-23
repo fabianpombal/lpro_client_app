@@ -26,8 +26,28 @@ class ProductService extends ChangeNotifier {
       this.products.add(tempProduct);
     });
     isLoading = false;
+    this.products.sort((a, b) => a.stock.compareTo(b.stock));
     notifyListeners();
     return this.products;
+  }
+
+  Future<String> updateProducto(Producto producto) async {
+    final url = Uri.https(_baseUrl, 'productos/${producto.id}.json');
+    final res = await http.put(url, body: producto.toJson());
+    final decodedData = res.body;
+    final index =
+        this.products.indexWhere((element) => element.id == producto.id);
+    this.products[index] = producto;
+    return producto.id!;
+  }
+
+  Future<String> createProducto(Producto producto) async {
+    final url = Uri.https(_baseUrl, 'productos.json');
+    final res = await http.put(url, body: producto.toJson());
+    final decodedData = json.decode(res.body);
+    producto.id = decodedData["name"];
+    this.products.add(producto);
+    return '';
   }
 
   void addProductos(Producto a) {
