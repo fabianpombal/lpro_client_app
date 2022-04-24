@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatelessWidget {
+  int a = 0;
   @override
   Widget build(BuildContext context) {
     final socket = Provider.of<SocketService>(context);
@@ -12,6 +13,20 @@ class HomeScreen extends StatelessWidget {
 
     if (socket.serverStatus == ServerStatus.Connecting)
       return LoadingScreen(texto: 'Conectando con el servidor');
+
+    socket.socket.on('fin-de-pedido', (data) {
+      print('$a ${data}');
+      a++;
+      // showDialog(
+      //   context: context,
+      //   builder: (BuildContext context) {
+      //     return AlertDialog(
+      //       title: Text('Info.'),
+      //       content: Text(data),
+      //     );
+      //   },
+      // );
+    });
 
     return Scaffold(
       appBar: AppBar(
