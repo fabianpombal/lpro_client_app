@@ -11,11 +11,12 @@ class HomeScreen extends StatelessWidget {
     final socket = Provider.of<SocketService>(context);
     final prod = Provider.of<ProductService>(context);
 
-    if (socket.serverStatus == ServerStatus.Connecting)
-      return LoadingScreen(texto: 'Conectando con el servidor');
+    if (socket.serverStatus == ServerStatus.Connecting) {
+      return const LoadingScreen(texto: 'Conectando con el servidor');
+    }
 
     socket.socket.on('fin-de-pedido', (data) {
-      print('$a ${data}');
+      print('$a $data');
       a++;
       // showDialog(
       //   context: context,
@@ -30,7 +31,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Client App',
           style: TextStyle(color: Colors.black),
         ),
@@ -51,12 +52,12 @@ class HomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             socket.serverStatus == ServerStatus.Online
-                ? Icon(
+                ? const Icon(
                     Icons.shopify_outlined,
                     color: Colors.green,
                     size: 70,
                   )
-                : Icon(
+                : const Icon(
                     Icons.tv_off_outlined,
                     color: Colors.red,
                     size: 70,
@@ -68,7 +69,7 @@ class HomeScreen extends StatelessWidget {
                 height: 400,
                 color: Colors.grey,
                 child: GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3),
                   itemBuilder: (BuildContext context, int index) {
                     return Padding(
@@ -80,15 +81,15 @@ class HomeScreen extends StatelessWidget {
                         child: Container(
                           height: 200,
                           width: 150,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                               borderRadius:
                                   BorderRadius.all(Radius.circular(20))),
                           child: Column(
                             children: [
                               ClipRRect(
                                 borderRadius:
-                                    BorderRadius.all(Radius.circular(20)),
-                                child: Container(
+                                    const BorderRadius.all(Radius.circular(20)),
+                                child: SizedBox(
                                   height: 100,
                                   width: 150,
                                   child: Image(
@@ -108,7 +109,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 5,
             ),
             MaterialButton(
@@ -119,14 +120,14 @@ class HomeScreen extends StatelessWidget {
                       // print(prod.products);
                       String listaIdProds = "";
                       if (socket.serverStatus == ServerStatus.Online) {
-                        prod.productosEnviar.forEach((e) {
+                        for (var e in prod.productosEnviar) {
                           print('${e.toMap()}');
                           prod.updateProducto(e);
                           // listaIdProds = listaIdProds + e.rfidTag;
 
                           socket.socket.emit('client-app', e.toMap());
-                        });
-                        socket.socket.emit('client-app', "fin-pedido");
+                        }
+                        socket.socket.emit('client-app', 'fin-pedido');
                         prod.clearProds();
                       } else {
                         return;
@@ -142,12 +143,12 @@ class HomeScreen extends StatelessWidget {
                         : Colors.white),
               ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 5,
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Container(
+              child: SizedBox(
                 height: 200,
                 width: double.infinity,
                 child: ListView.builder(
@@ -159,7 +160,7 @@ class HomeScreen extends StatelessWidget {
                         child: Container(
                           height: 300,
                           width: 200,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                               borderRadius:
                                   BorderRadius.all(Radius.circular(20))),
                           child: Column(
@@ -170,13 +171,13 @@ class HomeScreen extends StatelessWidget {
                                   children: [
                                     Text(
                                       prod.products[index].name,
-                                      style: TextStyle(fontSize: 17),
+                                      style: const TextStyle(fontSize: 17),
                                     ),
                                     Positioned(
                                       child: prod.products[index].stock != 0
                                           ? Text(
                                               'Quedan: ${prod.products[index].stock}')
-                                          : Text(
+                                          : const Text(
                                               "No hay stock",
                                               style:
                                                   TextStyle(color: Colors.red),
@@ -191,7 +192,7 @@ class HomeScreen extends StatelessWidget {
                                 color: Colors.white,
                               ),
                               ClipRRect(
-                                child: Container(
+                                child: SizedBox(
                                   height: 150,
                                   width: double.infinity,
                                   child: FadeInImage(
