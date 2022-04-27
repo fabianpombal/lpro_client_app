@@ -94,7 +94,7 @@ class MQTTManager {
     state.setAppConnectionState(MQTTAppConnectionState.connected);
     print('EXAMPLE::Mosquitto client connected....');
     _client!.subscribe(topic, MqttQos.atLeastOnce);
-    _client!.subscribe('nuevo_pedido', MqttQos.atLeastOnce);
+
     _client!.updates!.listen((List<MqttReceivedMessage<MqttMessage?>>? c) {
       // ignore: avoid_as
       final MqttPublishMessage recMess = c![0].payload as MqttPublishMessage;

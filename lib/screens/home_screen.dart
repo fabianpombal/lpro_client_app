@@ -37,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
           'Client App',
           style: TextStyle(color: Colors.black),
         ),
+        elevation: 0,
         backgroundColor: Colors.white,
         actions: [
           IconButton(
@@ -45,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     MQTTAppConnectionState.disconnected) {
                   manager = MQTTManager(
                       host: '192.168.1.38',
-                      topic: 'mosquitto/prueba',
+                      topic: 'nuevo_pedido',
                       id: 'controller5',
                       state: appState);
                   manager.initializeMQTTClient();
@@ -56,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 }
               },
               icon: Icon(
-                Icons.edit,
+                Icons.connect_without_contact,
                 color: appState.getAppConnectionState ==
                         MQTTAppConnectionState.disconnected
                     ? Colors.red
@@ -70,12 +71,12 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             appState.getAppConnectionState == MQTTAppConnectionState.connected
                 ? const Icon(
-                    Icons.shopify_outlined,
+                    Icons.shopping_cart,
                     color: Colors.green,
                     size: 70,
                   )
                 : const Icon(
-                    Icons.tv_off_outlined,
+                    Icons.remove_shopping_cart,
                     color: Colors.red,
                     size: 70,
                   ),
@@ -105,9 +106,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           print('${e.toMap()}');
                           prod.updateProducto(e);
                           // listaIdProds = listaIdProds + e.rfidTag;
-                          manager.publish(e.toJson(), null);
+                          manager.publish(e.toJson(), 'nuevo_pedido');
                         }
-                        manager.publish('fin-pedido', null);
+                        manager.publish('fin-pedido', 'nuevo_pedido');
 
                         prod.clearProds();
                       } else {
