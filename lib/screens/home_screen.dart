@@ -1,33 +1,35 @@
-import 'package:client_lpro_app/screens/loading_page.dart';
+import 'package:client_lpro_app/mqtt/MQTTManager.dart';
+import 'package:client_lpro_app/mqtt/state/MQTTAppState.dart';
 import 'package:client_lpro_app/services/product_service.dart';
-import 'package:client_lpro_app/services/socket_service.dart';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class HomeScreen extends StatelessWidget {
-  int a = 0;
+class HomeScreen extends StatefulWidget {
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late int a = 0;
+  late MQTTManager manager;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final socket = Provider.of<SocketService>(context);
     final prod = Provider.of<ProductService>(context);
-
-    if (socket.serverStatus == ServerStatus.Connecting) {
-      return const LoadingScreen(texto: 'Conectando con el servidor');
-    }
-
-    socket.socket.on('fin-de-pedido', (data) {
-      print('$a $data');
-      a++;
-      // showDialog(
-      //   context: context,
-      //   builder: (BuildContext context) {
-      //     return AlertDialog(
-      //       title: Text('Info.'),
-      //       content: Text(data),
-      //     );
-      //   },
-      // );
-    });
+    final appState = Provider.of<MQTTAppState>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -39,11 +41,26 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
               onPressed: () {
-                Navigator.pushNamed(context, 'ip');
+                if (appState.getAppConnectionState ==
+                    MQTTAppConnectionState.disconnected) {
+                  manager = MQTTManager(
+                      host: '192.168.1.38',
+                      topic: 'mosquitto/prueba',
+                      id: 'controller5',
+                      state: appState);
+                  manager.initializeMQTTClient();
+                  manager.connect();
+                } else if (appState.getAppConnectionState ==
+                    MQTTAppConnectionState.connected) {
+                  manager.disconnect();
+                }
               },
-              icon: const Icon(
+              icon: Icon(
                 Icons.edit,
-                color: Colors.black,
+                color: appState.getAppConnectionState ==
+                        MQTTAppConnectionState.disconnected
+                    ? Colors.red
+                    : Colors.green,
               ))
         ],
       ),
@@ -51,7 +68,7 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            socket.serverStatus == ServerStatus.Online
+            appState.getAppConnectionState == MQTTAppConnectionState.connected
                 ? const Icon(
                     Icons.shopify_outlined,
                     color: Colors.green,
@@ -68,45 +85,7 @@ class HomeScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 400,
                 color: Colors.grey,
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3),
-                  itemBuilder: (BuildContext context, int index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: GestureDetector(
-                        onTap: () {
-                          prod.productosEnviar.clear();
-                        },
-                        child: Container(
-                          height: 200,
-                          width: 150,
-                          decoration: const BoxDecoration(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(20))),
-                          child: Column(
-                            children: [
-                              ClipRRect(
-                                borderRadius:
-                                    const BorderRadius.all(Radius.circular(20)),
-                                child: SizedBox(
-                                  height: 100,
-                                  width: 150,
-                                  child: Image(
-                                    image: NetworkImage(
-                                        prod.productosEnviar[index].picture),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                  itemCount: prod.productosEnviar.length,
-                ),
+                child: _GridViewCustom(prod: prod),
               ),
             ),
             const SizedBox(
@@ -114,20 +93,22 @@ class HomeScreen extends StatelessWidget {
             ),
             MaterialButton(
               elevation: 70,
-              onPressed: socket.serverStatus != ServerStatus.Online
+              onPressed: appState.getAppConnectionState ==
+                      MQTTAppConnectionState.disconnected
                   ? null
                   : () {
                       // print(prod.products);
                       String listaIdProds = "";
-                      if (socket.serverStatus == ServerStatus.Online) {
+                      if (appState.getAppConnectionState ==
+                          MQTTAppConnectionState.connected) {
                         for (var e in prod.productosEnviar) {
                           print('${e.toMap()}');
                           prod.updateProducto(e);
                           // listaIdProds = listaIdProds + e.rfidTag;
-
-                          socket.socket.emit('client-app', e.toMap());
+                          manager.publish(e.toJson(), null);
                         }
-                        socket.socket.emit('client-app', 'fin-pedido');
+                        manager.publish('fin-pedido', null);
+
                         prod.clearProds();
                       } else {
                         return;
@@ -138,7 +119,8 @@ class HomeScreen extends StatelessWidget {
                 'Comprar',
                 style: TextStyle(
                     fontSize: 15,
-                    color: socket.serverStatus != ServerStatus.Online
+                    color: appState.getAppConnectionState ==
+                            MQTTAppConnectionState.disconnected
                         ? Colors.black26
                         : Colors.white),
               ),
@@ -165,46 +147,13 @@ class HomeScreen extends StatelessWidget {
                                   BorderRadius.all(Radius.circular(20))),
                           child: Column(
                             children: [
-                              Container(
-                                child: Stack(
-                                  alignment: Alignment.bottomLeft,
-                                  children: [
-                                    Text(
-                                      prod.products[index].name,
-                                      style: const TextStyle(fontSize: 17),
-                                    ),
-                                    Positioned(
-                                      child: prod.products[index].stock != 0
-                                          ? Text(
-                                              'Quedan: ${prod.products[index].stock}')
-                                          : const Text(
-                                              "No hay stock",
-                                              style:
-                                                  TextStyle(color: Colors.red),
-                                            ),
-                                      top: 0,
-                                      right: 0,
-                                    )
-                                  ],
-                                ),
-                                width: double.infinity,
-                                height: 30,
-                                color: Colors.white,
+                              _ContainerOfAvailableProducts(
+                                prod: prod,
+                                index: index,
                               ),
-                              ClipRRect(
-                                child: SizedBox(
-                                  height: 150,
-                                  width: double.infinity,
-                                  child: FadeInImage(
-                                    placeholder:
-                                        const AssetImage('assets/load.gif'),
-                                    image: NetworkImage(
-                                        prod.products[index].picture),
-                                    fit: BoxFit.cover,
-                                    fadeInDuration:
-                                        const Duration(milliseconds: 100),
-                                  ),
-                                ),
+                              _ImageOfAvailableProducts(
+                                prod: prod,
+                                index: index,
                               ),
                             ],
                           ),
@@ -226,6 +175,122 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ImageOfAvailableProducts extends StatelessWidget {
+  const _ImageOfAvailableProducts({
+    Key? key,
+    required this.prod,
+    required this.index,
+  }) : super(key: key);
+
+  final ProductService prod;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      child: SizedBox(
+        height: 150,
+        width: double.infinity,
+        child: FadeInImage(
+          placeholder: const AssetImage('assets/load.gif'),
+          image: NetworkImage(prod.products[index].picture),
+          fit: BoxFit.cover,
+          fadeInDuration: const Duration(milliseconds: 100),
+        ),
+      ),
+    );
+  }
+}
+
+class _ContainerOfAvailableProducts extends StatelessWidget {
+  const _ContainerOfAvailableProducts({
+    Key? key,
+    required this.prod,
+    required this.index,
+  }) : super(key: key);
+
+  final ProductService prod;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Stack(
+        alignment: Alignment.bottomLeft,
+        children: [
+          Text(
+            prod.products[index].name,
+            style: const TextStyle(fontSize: 17),
+          ),
+          Positioned(
+            child: prod.products[index].stock != 0
+                ? Text('Quedan: ${prod.products[index].stock}')
+                : const Text(
+                    "No hay stock",
+                    style: TextStyle(color: Colors.red),
+                  ),
+            top: 0,
+            right: 0,
+          )
+        ],
+      ),
+      width: double.infinity,
+      height: 30,
+      color: Colors.white,
+    );
+  }
+}
+
+class _GridViewCustom extends StatelessWidget {
+  const _GridViewCustom({
+    Key? key,
+    required this.prod,
+  }) : super(key: key);
+
+  final ProductService prod;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      gridDelegate:
+          const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
+      itemBuilder: (BuildContext context, int index) {
+        return Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: GestureDetector(
+            onTap: () {
+              prod.productosEnviar.clear();
+            },
+            child: Container(
+              height: 200,
+              width: 150,
+              decoration: const BoxDecoration(
+                  borderRadius: BorderRadius.all(Radius.circular(20))),
+              child: Column(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.all(Radius.circular(20)),
+                    child: SizedBox(
+                      height: 100,
+                      width: 150,
+                      child: Image(
+                        image:
+                            NetworkImage(prod.productosEnviar[index].picture),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+      itemCount: prod.productosEnviar.length,
     );
   }
 }

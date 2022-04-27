@@ -1,7 +1,8 @@
+import 'package:client_lpro_app/mqtt/state/MQTTAppState.dart';
 import 'package:client_lpro_app/screens/home_screen.dart';
-import 'package:client_lpro_app/screens/select_ip_screen.dart';
+
 import 'package:client_lpro_app/services/product_service.dart';
-import 'package:client_lpro_app/services/socket_service.dart';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -12,24 +13,26 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => SocketService()),
-        ChangeNotifierProvider(create: (context) => ProductService())
+        ChangeNotifierProvider(create: (context) => ProductService()),
+        ChangeNotifierProvider(
+          create: (context) => MQTTAppState(),
+        )
       ],
       child: MaterialApp(
         title: 'Material App',
         debugShowCheckedModeBanner: false,
         home: Scaffold(
           appBar: AppBar(
-            title: Text('Material App Bar'),
+            title: const Text('Material App Bar'),
           ),
           body: Center(
             child: Container(
-              child: Text('Hello World'),
+              child: const Text('Hello World'),
             ),
           ),
         ),
         initialRoute: 'home',
-        routes: {'home': (_) => HomeScreen(), 'ip': (_) => SelectIpScreen()},
+        routes: {'home': (_) => HomeScreen()},
       ),
     );
   }
