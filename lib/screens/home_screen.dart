@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (appState.getAppConnectionState ==
                     MQTTAppConnectionState.disconnected) {
                   manager = MQTTManager(
-                      host: '192.168.1.38',
+                      host: '192.168.56.208',
                       topic: 'nuevo_pedido',
                       id: 'controller5',
                       state: appState);
